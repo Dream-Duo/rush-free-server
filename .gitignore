@@ -1,0 +1,6 @@
+# Dependency directory
+/vendor/
+
+# IDE specific files
+.vscode/
+.idea/
