@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  api-server:
+    build:
+      context: .
+      args:
+        - API_SERVER_PATH=./cmd/api-server/main.go
+    volumes:
+      - ./:/app        # Mount the project directory to /app in the container
+      - /app/vendor    # Exclude the vendor folder
+    working_dir: /app   # Set the working directory inside the container
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"

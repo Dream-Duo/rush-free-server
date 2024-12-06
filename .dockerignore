@@ -1,0 +1,17 @@
+# Exclude build artifacts and IDE configs
+bin/
+*.log
+*.tmp
+*.out
+*.swp
+
+# Ignore local Go build files
+*.exe
+*.test
+*.so
+
+# Ignore version control and editor files
+.git
+.gitignore
+.vscode
+.idea
