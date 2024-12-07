@@ -2,14 +2,16 @@ version: '3.8'
 
 services:
   api-server:
+    env_file:
+      - .env
     build:
       context: .
       args:
         - API_SERVER_PATH=./cmd/api-server/main.go
     volumes:
-      - ./:/app        # Mount the project directory to /app in the container
-      - /app/vendor    # Exclude the vendor folder
-    working_dir: /app   # Set the working directory inside the container
+      - ./:/app                            # Mount the project directory to /app in the container
+      - /app/vendor                        # Exclude the vendor folder
+    working_dir: /app                      # Set the working directory inside the container
     ports:
       - "8080:8080"
     depends_on:
@@ -19,9 +21,9 @@ services:
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydb
+      POSTGRES_USER: ${DB_USER}            # Use the variable from .env
+      POSTGRES_PASSWORD: ${DB_PASSWORD}    # Use the variable from .env
+      POSTGRES_DB: ${DB_NAME}              # Use the variable from .env
     ports:
       - "5432:5432"
 
