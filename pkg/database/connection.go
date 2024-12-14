@@ -6,17 +6,12 @@ import (
 	"log"
 	"time"
 
-	"rush-free-server/internal/config"
-
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
 // Connect establishes a connection to the PostgreSQL database with retry logic.
 // Returns a database connection if successful, otherwise returns an error.
-func Connect() (*sql.DB, error) {
-	// Get the Data Source Name (DSN) for PostgreSQL connection
-	dataSourceName := config.GetPostgresDSN()
-
+func Connect(dataSourceName string) (*sql.DB, error) {
 	// Open a new database connection
 	database, err := sql.Open("postgres", dataSourceName)
 	if err != nil {
