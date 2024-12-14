@@ -57,3 +57,20 @@ func (r *UserRepository) GetUsersByName(name string) ([]User, error) {
 	}
 	return users, nil
 }
+
+func (r *UserRepository) GetUserById(id int) (User, error) {
+	row, err := r.DB.Query("SELECT id, name, email FROM users WHERE id = $1", id)
+	if err != nil {
+		return User{}, fmt.Errorf("failed to fetch user: %w", err)
+	}
+	defer row.Close()
+
+	var user User
+	if row.Next() {
+		if err := row.Scan(&user.ID, &user.Name, &user.Email); err != nil {
+			return User{}, fmt.Errorf("failed to scan user: %w", err)
+		}
+	}
+	return user, nil
+
+}
