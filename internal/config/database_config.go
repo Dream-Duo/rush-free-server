@@ -5,8 +5,13 @@ import (
 	"os"
 )
 
+type DatabaseConfig struct {
+	DatabaseURL string
+	Environment string
+}
+
 // GetPostgresDSN constructs the PostgreSQL DSN using environment variables.
-func GetPostgresDSN() string {
+func GetPostgresDSN(environment string) (DatabaseConfig, error) {
 	// Retrieve environment variables
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
@@ -21,8 +26,13 @@ func GetPostgresDSN() string {
 	}
 
 	// Construct and return the DSN
-	return fmt.Sprintf(
+	url := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode,
 	)
+
+	return DatabaseConfig{
+		DatabaseURL: url,
+		Environment: environment,
+	}, nil
 }

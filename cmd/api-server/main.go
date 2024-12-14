@@ -8,9 +8,10 @@ import (
 	"syscall"
 	"time"
 
+	"rush-free-server/internal/config"
 	"rush-free-server/cmd/api-server/handlers"
 	"rush-free-server/internal/repository/postgres"
-	"rush-free-server/pkg/database"
+	"rush-free-server/internal/database_migration"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -22,17 +23,20 @@ func main() {
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
-	db, err := database.Connect()
+	// Get the Data Source Name (DSN) for PostgreSQL connection
+	DatabaseConfig, err := config.GetPostgresDSN(os.Getenv("ENV"))
 	if err != nil {
-		logger.Fatal("Failed to connect to the database: %v", zap.Error(err))
+		logger.Fatal("Failed to get the PostgreSQL DSN: %v", zap.Error(err))
 	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			logger.Error("Error closing the database connection: %v", zap.Error(err))
-		}
-	}()
 
-	// Step 3: Set up signal handling for graceful shutdown
+	// Initialize database connection with migration verification
+    db, err := database_migration.InitializeDatabase(DatabaseConfig)
+    if err != nil {
+        logger.Fatal("Failed to initialize database: %v", zap.Error(err))
+    }
+    defer db.Close()
+
+	// Set up signal handling for graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 

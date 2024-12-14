@@ -18,6 +18,22 @@ services:
       postgres:
         condition: service_healthy
       
+  migrate:
+    build:
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - /app/vendor
+      - ./migrations:/app/migrations
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Don't start automatically with docker-compose up
+    profiles:
+      - tools
 
   postgres:
     image: postgres:15
