@@ -2,14 +2,13 @@ package main
 
 import (
 	"flag"
-	"log"
-	"fmt"
 
 	"rush-free-server/internal/config"
 	database_migration "rush-free-server/internal/database"
 	"rush-free-server/pkg/database"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -21,17 +20,21 @@ func main() {
 	)
 	flag.Parse()
 
-	fmt.Println("Command:", *command)
-	fmt.Println("Environment:", *env)
-	fmt.Println("Version:", *version)
+	// Initialize logger
+	zapLogger, _ := zap.NewDevelopment() // Development logger for better readability
+	defer zapLogger.Sync()
+	logger := zapLogger.Sugar()
 
 	// Get the Data Source Name (DSN) for PostgreSQL connection
 	DatabaseConfig, err := config.GetPostgresDSN(*env)
+	if err != nil {
+		logger.Fatal("Failed to get the PostgreSQL DSN: %v", err)
+	}
 
 	// Connect to the database
 	db, err := database.Connect(DatabaseConfig.DatabaseURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		logger.Fatal("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
 
@@ -41,7 +44,7 @@ func main() {
 		DatabaseURL:    DatabaseConfig.DatabaseURL,
 	})
 	if err != nil {
-		log.Fatalf("Failed to create migrator: %v", err)
+		logger.Fatal("Failed to create migrator: %v", err)
 	}
 	defer migrator.Close()
 
@@ -49,30 +52,30 @@ func main() {
 	switch *command {
 	case "up":
 		if err := migrator.Up(); err != nil {
-			log.Fatalf("Migration up failed: %v", err)
+			logger.Fatal("Migration up failed: %v", err)
 		}
-		log.Println("Successfully ran all migrations")
+		logger.Info("Successfully ran all migrations")
 
 	case "down":
 		if err := migrator.Down(); err != nil {
-			log.Fatalf("Migration down failed: %v", err)
+			logger.Fatal("Migration down failed: %v", err)
 		}
-		log.Println("Successfully reverted all migrations")
+		logger.Info("Successfully reverted all migrations")
 
 	case "version":
 		version, dirty, err := migrator.Version()
 		if err != nil {
-			log.Fatalf("Failed to get version: %v", err)
+			logger.Fatal("Failed to get version: %v", err)
 		}
-		log.Printf("Current migration version: %d (dirty: %v)", version, dirty)
+		logger.Info("Current migration version: %d (dirty: %v)", version, dirty)
 	
 	case "force":
 		if err:= migrator.Force(*version); err != nil {
-			log.Fatalf("Failed to force migration: %v", err)
+			logger.Fatal("Failed to force migration: %v", err)
 		}
-		log.Printf("Successfully forced migration to version %v", *version)
+		logger.Info("Successfully forced migration to version %v", *version)
 
 	default:
-		log.Fatalf("Unknown command: %s", *command)
+		logger.Fatal("Unknown command: %v", *command)
 	}
 }
