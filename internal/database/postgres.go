@@ -5,14 +5,23 @@ import (
 	"fmt"
 
 	"rush-free-server/internal/config"
+	"rush-free-server/pkg/database"
+	"go.uber.org/zap"
 )
 
 // InitializeDatabase sets up the database connection and verifies migrations
 func InitializeDatabase(config config.DatabaseConfig) (*sql.DB, error) {
-	db, err := sql.Open("postgres", config.DatabaseURL)
+	// Initialize logger
+	zapLogger, _ := zap.NewDevelopment() // Development logger for better readability
+	defer zapLogger.Sync()
+	logger := zapLogger.Sugar()
+
+	// Connect to the database
+	db, err := database.Connect(config.DatabaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		logger.Fatal("Failed to initialize database: %v", err)
 	}
+	defer db.Close()
 
 	// Verify migrations are up to date in non-development environments
 	if config.Environment != "development" {
