@@ -11,7 +11,7 @@ import (
 	"rush-free-server/internal/config"
 	"rush-free-server/cmd/api-server/handlers"
 	"rush-free-server/internal/repository/postgres"
-	"rush-free-server/internal/database_migration"
+	database_initializer "rush-free-server/internal/database"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -30,7 +30,7 @@ func main() {
 	}
 
 	// Initialize database connection with migration verification
-    db, err := database_migration.InitializeDatabase(DatabaseConfig)
+    db, err := database_initializer.InitializeDatabase(DatabaseConfig)
     if err != nil {
         logger.Fatal("Failed to initialize database: %v", zap.Error(err))
     }

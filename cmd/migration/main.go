@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"rush-free-server/internal/config"
-	"rush-free-server/internal/database_migration"
+	database_migration "rush-free-server/internal/database"
 	"rush-free-server/pkg/database"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
