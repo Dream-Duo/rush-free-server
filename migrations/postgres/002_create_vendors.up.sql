@@ -6,8 +6,6 @@ CREATE TABLE vendors (
     business_name VARCHAR(255) NOT NULL,
     contact_person_name VARCHAR(200),
     phone_verified BOOLEAN DEFAULT false,
-    phone_verification_code VARCHAR(6),
-    phone_verification_expires_at TIMESTAMP,
     tax_id VARCHAR(50),
     business_license VARCHAR(50),
     is_verified BOOLEAN DEFAULT false,

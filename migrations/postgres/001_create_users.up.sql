@@ -6,11 +6,18 @@ CREATE TABLE users (
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     phone_verified BOOLEAN DEFAULT false,
-    phone_verification_code VARCHAR(6),
-    phone_verification_expires_at TIMESTAMP,
     preferences JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP
+);
+
+-- User Saved Places
+CREATE TABLE user_saved_places (
+    saved_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(user_id),
+    restaurant_id INTEGER NOT NULL REFERENCES restaurants(restaurant_id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, restaurant_id)
 );
 
 -- OAuth connections for users

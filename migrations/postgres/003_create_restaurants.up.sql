@@ -51,6 +51,24 @@ CREATE TABLE restaurant_images (
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Restaurant amenities
+CREATE TABLE restaurant_amenities (
+    amenity_id SERIAL PRIMARY KEY,
+    restaurant_id INTEGER NOT NULL REFERENCES restaurants(restaurant_id),
+    amenity_name VARCHAR(100),
+    is_available BOOLEAN DEFAULT true
+);
+
+-- Restaurant ratings and reviews
+CREATE TABLE restaurant_reviews (
+    review_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(user_id),
+    restaurant_id INTEGER NOT NULL REFERENCES restaurants(restaurant_id),
+    rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+    review_text TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes
 CREATE INDEX idx_restaurants_location ON restaurants(latitude, longitude);
 CREATE INDEX idx_restaurant_hours_search ON restaurant_hours(day_of_week, opening_time, closing_time);
