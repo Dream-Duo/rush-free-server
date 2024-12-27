@@ -7,7 +7,7 @@ CREATE TABLE vendors (
     contact_person_name VARCHAR(200),
     phone_verified BOOLEAN DEFAULT false,
     tax_id VARCHAR(50),
-    business_license VARCHAR(50),
+    gst_number VARCHAR(50),
     is_verified BOOLEAN DEFAULT false,
     verification_date TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

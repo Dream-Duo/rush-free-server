@@ -1,6 +1,6 @@
 -- Define ENUM types
 DO $$ BEGIN
-    CREATE TYPE restaurant_status_enum AS ENUM('active', 'temporarily_closed', 'permanently_closed');
+    CREATE TYPE restaurant_status_enum AS ENUM('active', 'temporarily_closed', 'permanently_closed', 'opening_soon');
 EXCEPTION WHEN duplicate_object THEN
     -- Do nothing, type already exists
 END $$;
