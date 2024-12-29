@@ -1,43 +1,81 @@
 package main
 
 import (
-	"database/sql"
-	"log"
+	"flag"
 
-	"rush-free-server/internal/config" // Adjust import path
+	"rush-free-server/internal/config"
+	database_migration "rush-free-server/internal/database"
+	"rush-free-server/pkg/database"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
+	"go.uber.org/zap"
 )
 
 func main() {
-	// Get the PostgreSQL DSN from the config
-	dsn := config.GetPostgresDSN()
+	// Parse command line flags
+	var (
+		command = flag.String("command", "up", "migration command (up/down/version)")
+		env     = flag.String("env", "development", "environment (development/staging/production)")
+		version = flag.Int("version", 0, "target migration version")
+	)
+	flag.Parse()
+
+	// Initialize logger
+	zapLogger, _ := zap.NewDevelopment() // Development logger for better readability
+	defer zapLogger.Sync()
+	logger := zapLogger.Sugar()
+
+	// Get the Data Source Name (DSN) for PostgreSQL connection
+	DatabaseConfig, err := config.GetPostgresDSN(*env)
+	if err != nil {
+		logger.Fatal("Failed to get the PostgreSQL DSN: %v", err)
+	}
 
 	// Connect to the database
-	db, err := sql.Open("postgres", dsn)
+	db, err := database.Connect(DatabaseConfig.DatabaseURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		logger.Fatal("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
 
-	// Ping the database to ensure the connection is successful
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Database ping failed: %v", err)
-	}
-
-	// Create the User table
-	createTableQuery := `
-	CREATE TABLE IF NOT EXISTS users (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(100) NOT NULL,
-		email VARCHAR(100) UNIQUE NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);`
-
-	_, err = db.Exec(createTableQuery)
+	// Create migrator
+	migrator, err := database_migration.NewMigrator(db, database_migration.MigrationConfig{
+		MigrationsPath: "/app/migrations/postgres",
+		DatabaseURL:    DatabaseConfig.DatabaseURL,
+	})
 	if err != nil {
-		log.Fatalf("Failed to create the User table: %v", err)
+		logger.Fatal("Failed to create migrator: %v", err)
 	}
+	defer migrator.Close()
 
-	log.Println("User table created successfully!")
+	// Execute command
+	switch *command {
+	case "up":
+		if err := migrator.Up(); err != nil {
+			logger.Fatal("Migration up failed: %v", err)
+		}
+		logger.Info("Successfully ran all migrations")
+
+	case "down":
+		if err := migrator.Down(); err != nil {
+			logger.Fatal("Migration down failed: %v", err)
+		}
+		logger.Info("Successfully reverted all migrations")
+
+	case "version":
+		version, dirty, err := migrator.Version()
+		if err != nil {
+			logger.Fatal("Failed to get version: %v", err)
+		}
+		logger.Info("Current migration version: %d (dirty: %v)", version, dirty)
+	
+	case "force":
+		if err:= migrator.Force(*version); err != nil {
+			logger.Fatal("Failed to force migration: %v", err)
+		}
+		logger.Info("Successfully forced migration to version %v", *version)
+
+	default:
+		logger.Fatal("Unknown command: %v", *command)
+	}
 }
