@@ -3,6 +3,8 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+
+	"go.uber.org/zap"
 )
 
 type User struct {
@@ -25,7 +27,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 func (r *UserRepository) GetUsers() ([]User, error) {
 	rows, err := r.DB.Query("SELECT id, name, email FROM users")
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch users: %w", err)
+		zap.S().Errorf("failed to fetch users: %w", err)
 	}
 	defer rows.Close()
 
@@ -33,7 +35,7 @@ func (r *UserRepository) GetUsers() ([]User, error) {
 	for rows.Next() {
 		var user User
 		if err := rows.Scan(&user.ID, &user.Name, &user.Email); err != nil {
-			return nil, fmt.Errorf("failed to scan user: %w", err)
+			zap.S().Errorf("failed to scan user: %w", err)
 		}
 		users = append(users, user)
 	}
@@ -43,7 +45,7 @@ func (r *UserRepository) GetUsers() ([]User, error) {
 func (r *UserRepository) GetUsersByName(name string) ([]User, error) {
 	rows, err := r.DB.Query("SELECT id, name, email FROM users WHERE name = $1", name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch user: %w", err)
+		zap.S().Errorf("failed to fetch user: %w", err)
 	}
 	defer rows.Close()
 
@@ -51,7 +53,7 @@ func (r *UserRepository) GetUsersByName(name string) ([]User, error) {
 	for rows.Next() {
 		var user User
 		if err := rows.Scan(&user.ID, &user.Name, &user.Email); err != nil {
-			return nil, fmt.Errorf("failed to scan user: %w", err)
+			zap.S().Errorf("failed to scan user: %w", err)
 		}
 		users = append(users, user)
 	}

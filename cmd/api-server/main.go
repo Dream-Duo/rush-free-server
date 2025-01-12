@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"log"
 
 	"rush-free-server/internal/config"
 	"rush-free-server/cmd/api-server/handlers"
@@ -18,21 +19,22 @@ import (
 )
 
 func main() {
-	// Initialize logger
-	logger, _ := zap.NewDevelopment() // Development logger for better readability
-	defer logger.Sync()
-	sugar := logger.Sugar()
+	// Initialize the logger
+	if err := config.InitializeLogger(); err != nil {
+		log.Fatalf("failed to initialize logger: %v", err)
+	}
+	defer config.SyncLogger() // Ensure the logger is flushed before exiting
 
 	// Get the Data Source Name (DSN) for PostgreSQL connection
 	DatabaseConfig, err := config.GetPostgresDSN(os.Getenv("ENV"))
 	if err != nil {
-		logger.Fatal("Failed to get the PostgreSQL DSN: %v", zap.Error(err))
+		zap.S().Fatal("failed to get the PostgreSQL DSN", zap.Error(err))
 	}
 
 	// Initialize database connection with migration verification
     db, err := database_initializer.InitializeDatabase(DatabaseConfig)
     if err != nil {
-        logger.Fatal("Failed to initialize database: %v", zap.Error(err))
+        zap.S().Fatal("failed to initialize database", zap.Error(err))
     }
     defer db.Close()
 
@@ -42,15 +44,12 @@ func main() {
 
 	// Initialize repository and handler
 	userRepo := postgres.NewUserRepository(db)
-	userHandler := handlers.NewUserHandler(userRepo, sugar)
+	userHandler := handlers.NewUserHandler(userRepo, zap.S())
 
 	// Initialize router
 	router := mux.NewRouter()
 	router.HandleFunc("/users", userHandler.GetUsersHandler).Methods("GET")
 	router.HandleFunc("/users/{name}", userHandler.GetUsersByNameHandler).Methods("GET")
-
-	// Basic health check route
-	// curl http://localhost:8080/health
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
@@ -58,9 +57,6 @@ func main() {
 
 	// API routes
 	api := router.PathPrefix("/api/v1").Subrouter()
-
-	// Sample API endpoint
-	// curl http://localhost:8080/api/v1/ping
 	api.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -77,25 +73,24 @@ func main() {
 
 	// Graceful shutdown
 	go func() {
-		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM)
-		<-sigint
+		<-stop
 
 		// Received shutdown signal
-		logger.Info("Shutting down server...")
+		zap.L().Info("Shutting down server...")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {
-			logger.Fatal("Server shutdown failed", zap.Error(err))
+			// Using Error instead of Fatal for graceful shutdown
+			zap.S().Error("server shutdown failed", zap.Error(err))
 		}
 	}()
 
 	// Start server
-	logger.Info("Starting server on :8080")
+	zap.L().Info("Starting server on :8080")
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		logger.Fatal("Server failed to start", zap.Error(err))
+		zap.S().Fatal("server failed to start", zap.Error(err))
 	}
 
-	logger.Info("Server stopped")
+	zap.L().Info("Server stopped")
 }
