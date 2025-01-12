@@ -48,6 +48,7 @@ func NewMigrator(db *sql.DB, config MigrationConfig) (*Migrator, error) {
 func (m *Migrator) Up() error {
 	err := m.migrator.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		// Return the error to the caller
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 	return nil

@@ -12,11 +12,6 @@ import (
 // Connect establishes a connection to the PostgreSQL database with retry logic.
 // Returns a database connection if successful, otherwise returns an error.
 func Connect(dataSourceName string) (*sql.DB, error) {
-	// Initialize logger
-	zapLogger, _ := zap.NewDevelopment() // Development logger for better readability
-	defer zapLogger.Sync()
-	logger := zapLogger.Sugar()
-
 	// Open a new database connection
 	database, err := sql.Open("postgres", dataSourceName)
 	if err != nil {
@@ -30,12 +25,12 @@ func Connect(dataSourceName string) (*sql.DB, error) {
 	// Attempt to ping the database to ensure the connection is established
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		if err := database.Ping(); err == nil {
-			logger.Info("Successfully connected to PostgreSQL database")
+			zap.L().Info("Successfully connected to PostgreSQL database")
 			return database, nil
 		}
 		// Log retry attempt and wait before retrying
 		if attempt < maxRetries-1 {
-			logger.Info("Failed to connect to database, retrying in %v... (%d/%d)", retryInterval, attempt+1, maxRetries)
+			zap.S().Info("Failed to connect to database, retrying in %v... (%d/%d)", retryInterval, attempt+1, maxRetries)
 			time.Sleep(retryInterval)
 		} else {
 			// Return an error if all retry attempts fail
