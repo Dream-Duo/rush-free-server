@@ -1,0 +1,20 @@
+level: info
+encoding: json
+outputPaths:
+  - stdout
+  - /var/log/api_server.log
+errorOutputPaths:
+  - stderr
+  - /var/log/api_server.log
+encoderConfig:
+  messageKey: message
+  levelKey: level
+  timeKey: time
+  nameKey: logger
+  callerKey: caller
+  stacktraceKey: stacktrace
+  lineEnding: "\n"
+  levelEncoder: lowercase
+  timeEncoder: iso8601
+  durationEncoder: string
+  callerEncoder: short
