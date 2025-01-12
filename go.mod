@@ -3,7 +3,6 @@ module rush-free-server
 go 1.23.4
 
 require (
-
 	// Database migrations
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	// Router and Middleware

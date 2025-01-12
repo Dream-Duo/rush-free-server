@@ -19,8 +19,7 @@ CREATE TABLE restaurants (
     description TEXT,
     cuisine_type VARCHAR(100),
     address TEXT NOT NULL,
-    latitude DECIMAL(10, 8),
-    longitude DECIMAL(11, 8),
+    location GEOGRAPHY(POINT, 4326),
     phone VARCHAR(20),
     email VARCHAR(255),
     seating_capacity INTEGER,
@@ -70,5 +69,5 @@ CREATE TABLE restaurant_reviews (
 );
 
 -- Indexes
-CREATE INDEX idx_restaurants_location ON restaurants(latitude, longitude);
+CREATE INDEX idx_restaurants_location ON restaurants USING GIST(location);
 CREATE INDEX idx_restaurant_hours_search ON restaurant_hours(day_of_week, opening_time, closing_time);
