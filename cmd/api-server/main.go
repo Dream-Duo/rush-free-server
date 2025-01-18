@@ -2,16 +2,14 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-	"log"
 
 	"rush-free-server/internal/config"
-	"rush-free-server/cmd/api-server/handlers"
-	"rush-free-server/internal/repository/postgres"
 	database_initializer "rush-free-server/internal/database"
 
 	"github.com/gorilla/mux"
@@ -32,25 +30,36 @@ func main() {
 	}
 
 	// Initialize database connection with migration verification
-    db, err := database_initializer.InitializeDatabase(DatabaseConfig)
-    if err != nil {
-        zap.S().Fatal("failed to initialize database", zap.Error(err))
-    }
-    defer db.Close()
+	db, err := database_initializer.InitializeDatabase(DatabaseConfig)
+	if err != nil {
+		zap.S().Fatal("failed to initialize database", zap.Error(err))
+	}
+	defer db.Close()
+
+	// Initialize Redis client
+	redisClient, err := database_initializer.InitializeRedis()
+	if err != nil {
+		zap.S().Fatal("failed to initialize Redis", zap.Error(err))
+	}
+	defer redisClient.Close() // Ensure Redis client is closed on shutdown
 
 	// Set up signal handling for graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
-	// Initialize repository and handler
-	userRepo := postgres.NewUserRepository(db)
-	userHandler := handlers.NewUserHandler(userRepo, zap.S())
-
 	// Initialize router
 	router := mux.NewRouter()
-	router.HandleFunc("/users", userHandler.GetUsersHandler).Methods("GET")
-	router.HandleFunc("/users/{name}", userHandler.GetUsersByNameHandler).Methods("GET")
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		if err := db.Ping(); err != nil {
+			zap.S().Error("Database ping failed", zap.Error(err))
+			http.Error(w, "Database unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		if _, err := redisClient.Ping(context.Background()).Result(); err != nil {
+			zap.S().Error("Redis ping failed", zap.Error(err))
+			http.Error(w, "Redis unavailable", http.StatusServiceUnavailable)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
@@ -63,9 +72,14 @@ func main() {
 		w.Write([]byte(`{"message": "pong"}`))
 	})
 
+	serverPort := os.Getenv("SERVER_PORT")
+	if serverPort == "" {
+		serverPort = "8080"
+	}
+
 	// Create server
 	server := &http.Server{
-		Addr:         ":8080", // Hard-coded port for simplicity
+		Addr:         ":" + serverPort,
 		Handler:      router,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
