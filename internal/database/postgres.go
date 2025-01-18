@@ -19,7 +19,6 @@ func InitializeDatabase(config config.DatabaseConfig) (*sql.DB, error) {
 		zap.S().Error("failed to initialize database: %v", zap.Error(err))
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
-	defer db.Close()
 
 	// Verify migrations are up to date in non-development environments
 	if config.Environment != "development" {
