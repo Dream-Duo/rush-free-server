@@ -2,8 +2,8 @@ package database_migration
 
 import (
 	"context"
-  "fmt"
-  "time"
+	"fmt"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
@@ -11,10 +11,10 @@ import (
 
 // InitializeRedis sets up the Redis client connection.
 func InitializeRedis() (*redis.Client, error) {
-  client := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379", 
-		Password: "",          
-		DB:       0,          
+	client := redis.NewClient(&redis.Options{
+		Addr:     "redis:6379",
+		Password: "",
+		DB:       0,
 	})
 
 	// Test the connection
@@ -28,6 +28,6 @@ func InitializeRedis() (*redis.Client, error) {
 	}
 
 	zap.L().Info("Connected to Redis successfully")
- 
-  return client, nil
+
+	return client, nil
 }
