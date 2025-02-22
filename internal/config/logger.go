@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
 )
