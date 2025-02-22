@@ -74,11 +74,11 @@ func (m *Migrator) Close() error {
 	return err
 }
 
-// Force sets the migration to a specific version, even if the database is dirty 
-func (m *Migrator) Force(version int) error { 
-	err := m.migrator.Force(version) 
-	if err != nil { 
-		return fmt.Errorf("failed to force migration to version %d: %w", version, err) 
-	} 
-	return nil 
+// Force sets the migration to a specific version, even if the database is dirty
+func (m *Migrator) Force(version int) error {
+	err := m.migrator.Force(version)
+	if err != nil {
+		return fmt.Errorf("failed to force migration to version %d: %w", version, err)
+	}
+	return nil
 }

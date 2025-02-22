@@ -70,9 +70,9 @@ func main() {
 			zap.S().Fatal("failed to get version: %v", err)
 		}
 		zap.S().Info("Current migration version: %d (dirty: %v)", version, dirty)
-	
+
 	case "force":
-		if err:= migrator.Force(*version); err != nil {
+		if err := migrator.Force(*version); err != nil {
 			zap.S().Fatal("failed to force migration: %v", err)
 		}
 		zap.S().Info("Successfully forced migration to version %v", *version)

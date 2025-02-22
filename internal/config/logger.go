@@ -15,7 +15,7 @@ func InitializeLogger() error {
 	// Determine the environment (default to production)
 	env := os.Getenv("ENV")
 	configFilePath := os.Getenv("FILE_PATH")
-  if env == "" {
+	if env == "" {
 		env = "production"
 	}
 
