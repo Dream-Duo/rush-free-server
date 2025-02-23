@@ -55,11 +55,15 @@ jobs:
         run: ls -R
         working-directory: ${{ github.workspace }}
 
+      - name: Debug - List Go Files
+        run: find . -name "*.go"
+        working-directory: ${{ github.workspace }}
+
       - name: Debug - Show Current Directory
         run: pwd
 
       - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run --config=.golangci.yml .
+        run: $(go env GOPATH)/bin/golangci-lint run --config=.golangci.yml
         working-directory: ${{ github.workspace }}
 
       - name: Run go vet
