@@ -37,6 +37,9 @@ jobs:
         with:
           go-version: 1.23.4 
 
+      - name: Debug - Show Go Environment
+        run: go env
+
       - name: Install dependencies
         run: go mod tidy
 
@@ -50,30 +53,32 @@ jobs:
       - name: Install golangci-lint
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
+          echo "Checking if golangci-lint is installed..."
+          $(go env GOPATH)/bin/golangci-lint --version
 
       - name: Debug - List Files
         run: ls -R
-        working-directory: ${{ github.workspace }}
 
       - name: Debug - List Go Files
         run: find . -name "*.go"
-        working-directory: ${{ github.workspace }}
 
       - name: Debug - Show Current Directory
         run: pwd
 
       - name: Run golangci-lint
         run: $(go env GOPATH)/bin/golangci-lint run --config=.golangci.yml ./cmd/... ./internal/... ./pkg/...
-        working-directory: ${{ github.workspace }}
 
       - name: Run go vet
-        run: go vet ./...
- 
+        run: go vet ./cmd/... ./internal/... ./pkg/... 
+
       - name: Install gosec
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
+      - name: Verify gosec Installation
+        run: $(go env GOPATH)/bin/gosec --version
+
       - name: Run gosec security check
-        run: $(go env GOPATH)/bin/gosec ./...
+        run: $(go env GOPATH)/bin/gosec ./cmd/... ./internal/... ./pkg/...
 
       - name: Run tests
         env:
@@ -83,5 +88,4 @@ jobs:
           POSTGRES_PORT: 5432
           REDIS_HOST: localhost
           REDIS_PORT: 6379
-        run: go test ./... -v
-
+        run: go test ./cmd/... ./internal/... ./pkg/... -v
