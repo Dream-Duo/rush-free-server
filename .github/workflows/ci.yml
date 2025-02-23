@@ -63,7 +63,7 @@ jobs:
         run: pwd
 
       - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run --config=.golangci.yml
+        run: $(go env GOPATH)/bin/golangci-lint run --config=.golangci.yml ./cmd/... ./internal/... ./pkg/...
         working-directory: ${{ github.workspace }}
 
       - name: Run go vet
