@@ -46,20 +46,23 @@ jobs:
             echo "Go files need formatting. Run 'gofmt -w .' locally and commit changes."
             exit 1
           fi
- 
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
+
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: latest
-          args: --config=.golangci.yml --timeout=5m --path-prefix=rush-free-server
+        run: $(go env GOPATH)/bin/golangci-lint run --config=.golangci.yml
+        working-directory: ${{ github.workflows }}
 
       - name: Run go vet
         run: go vet ./...
+ 
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
-      - name: Run go security check
-        uses: securego/gosec@v2
-        with:
-          args: ./...
+      - name: Run gosec security check
+        run: $(go env GOPATH)/bin/gosec ./...
 
       - name: Run tests
         env:
