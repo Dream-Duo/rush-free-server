@@ -61,9 +61,9 @@ func main() {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-        if _, err := w.Write([]byte("OK")); err != nil {
-          zap.S().Error("Failed to write response", zap.Error(err))
-        }
+		if _, err := w.Write([]byte("OK")); err != nil {
+			zap.S().Error("Failed to write response", zap.Error(err))
+		}
 	})
 
 	// API routes
@@ -71,9 +71,9 @@ func main() {
 	api.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-        if _, err := w.Write([]byte(`{"message": "pong"}`)); err != nil {
-          zap.S().Error("Failed to write response", zap.Error(err))
-        }
+		if _, err := w.Write([]byte(`{"message": "pong"}`)); err != nil {
+			zap.S().Error("Failed to write response", zap.Error(err))
+		}
 	})
 
 	serverPort := os.Getenv("SERVER_PORT")

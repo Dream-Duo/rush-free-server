@@ -19,8 +19,8 @@ func InitializeLogger() error {
 		env = "production"
 	}
 
-    fmt.Println("Environment:", env)
-    fmt.Println("Config File Path:", configFilePath)
+	fmt.Println("Environment:", env)
+	fmt.Println("Config File Path:", configFilePath)
 
 	// Read the configuration file
 	file, err := os.Open(configFilePath)
