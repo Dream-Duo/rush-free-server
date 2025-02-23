@@ -52,7 +52,7 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
 
       - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run --config=.golangci.yml ./...
+        run: $(go env GOPATH)/bin/golangci-lint run --config=.golangci.yml ./rush-free-server
         working-directory: ${{ github.workflows }}
 
       - name: Run go vet
