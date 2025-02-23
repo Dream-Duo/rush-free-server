@@ -35,7 +35,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21
+          go-version: 1.23.4 
 
       - name: Install dependencies
         run: go mod tidy
@@ -46,14 +46,20 @@ jobs:
             echo "Go files need formatting. Run 'gofmt -w .' locally and commit changes."
             exit 1
           fi
-
-      - name: Install golangci-lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
-
+ 
       - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run --config=.golangci.yml
-        working-directory: ${{ github.workflows }}
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --config=.golangci.yml --timeout=5m --path-prefix=rush-free-server
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run go security check
+        uses: securego/gosec@v2
+        with:
+          args: ./...
 
       - name: Run tests
         env:
