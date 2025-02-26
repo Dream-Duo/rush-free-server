@@ -5,6 +5,9 @@ issues:
   exclude-dirs:
     - "go/pkg/mod"
     - "vendor"
+    - "opt/hostedtoolcache/go/.*"
+    - "/usr/local/go/.*"
+    - "/usr/lib/go-.*"
   exclude-use-default: false
   exclude:
     - "error return value not checked"
