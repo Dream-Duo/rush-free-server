@@ -52,17 +52,25 @@ jobs:
 
       - name: Install golangci-lint
         run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.64.5
-          export PATH=$PATH:$(go env GOPATH)/bin
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.5
+
+      - name: Verify golangci-lint Installation
+        run: |
+          ls -la $(go env GOPATH)/bin
+
+      - name: Set PATH for golangci-lint
+        run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Debug Go Environment
+        run: |
+          go version
+          go env
 
       - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run --timeout=5m --config=.golangci.yml ./cmd/... ./internal/... ./pkg/...
-
-      - name: Debug go version
-        run: go version
-
-      - name: Debug golangci-lint version
-        run: $(go env GOPATH)/bin/golangci-lint version
+        run: |
+          which golangci-lint
+          golangci-lint --version
+          golangci-lint run --timeout=5m --verbose --config=.golangci.yml ./cmd/... ./internal/... ./pkg/...
 
       - name: Run go vet
         run: go vet ./...
