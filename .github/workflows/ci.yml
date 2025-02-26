@@ -35,13 +35,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.23.4
-
-      - name: Set Environment Variables
-        run: |
-          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
-          echo "GOROOT=$(go env GOROOT)" >> $GITHUB_ENV
-          echo "PATH=$PATH:$(go env GOPATH)/bin" >> $GITHUB_ENV
+          go-version: 1.23.4 
 
       - name: Install dependencies
         run: go mod tidy
@@ -57,11 +51,20 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
 
-      - name: Verify golangci-lint installation
-        run: /home/runner/go/bin/golangci-lint --version
+      - name: Debug - List Files
+        run: ls -R
+        working-directory: ${{ github.workspace }}
+
+      - name: Debug - List Go Files
+        run: find . -name "*.go"
+        working-directory: ${{ github.workspace }}
+
+      - name: Debug - Show Current Directory
+        run: pwd
 
       - name: Run golangci-lint
-        run: /home/runner/go/bin/golangci-lint run --config=.golangci.yml --timeout=5m ./...
+        run: $(go env GOPATH)/bin/golangci-lint run --timeout=5m --config=.golangci.yml
+        working-directory: ${{ github.workspace }}
 
       - name: Run go vet
         run: go vet ./...

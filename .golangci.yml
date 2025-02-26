@@ -1,6 +1,41 @@
 run:
   timeout: 5m
-  skip-dirs:
+
+issues:
+  exclude-dirs:
     - "go/pkg/mod"
     - "vendor"
+  exclude-use-default: false
+  exclude:
+    - "error return value not checked"
+    - "should have a comment"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - gosimple
+    - revive
+    - goconst
+    - gofmt
+    - gosec
+
+linters-settings:
+  errcheck:
+    check-blank: true
+  gofmt:
+    simplify: true
+  revive:
+    severity: warning
+  staticcheck:
+    checks: ["all"]
+
+output:
+  formats:
+    - colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
 

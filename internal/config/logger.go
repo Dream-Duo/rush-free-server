@@ -23,11 +23,15 @@ func InitializeLogger() error {
 	fmt.Println("Config File Path:", configFilePath)
 
 	// Read the configuration file
-	file, err := os.Open(configFilePath)
+	file, err := os.Open(filepath.Clean(configFilePath))
 	if err != nil {
 		return fmt.Errorf("failed to open logger config file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			globalLogger.Sugar().Errorf("failed to close logger config file: %v", err)
+		}
+	}()
 
 	// Decode the configuration into a zap.Config struct
 	var cfg zap.Config
@@ -54,6 +58,8 @@ func InitializeLogger() error {
 // SyncLogger flushes any buffered log entries
 func SyncLogger() {
 	if globalLogger != nil {
-		_ = globalLogger.Sync()
+		if err := globalLogger.Sync(); err != nil {
+			globalLogger.Sugar().Errorf("failed to sync logger: %v", err)
+		}
 	}
 }

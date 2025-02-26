@@ -70,8 +70,12 @@ func (m *Migrator) Version() (uint, bool, error) {
 
 // Close releases the migrator resources
 func (m *Migrator) Close() error {
-	_, err := m.migrator.Close()
-	return err
+	result, err := m.migrator.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close migrator: %w", err)
+	}
+	fmt.Println("Migrator closed successfully:", result)
+	return nil
 }
 
 // Force sets the migration to a specific version, even if the database is dirty

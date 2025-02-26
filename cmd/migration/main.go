@@ -38,7 +38,11 @@ func main() {
 	if err != nil {
 		zap.S().Fatal("failed to initialize database: %v", zap.Error(err))
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			zap.S().Error("failed to close database connection", zap.Error(err))
+		}
+	}()
 
 	// Create migrator
 	migrator, err := database_migration.NewMigrator(db, database_migration.MigrationConfig{
@@ -48,7 +52,11 @@ func main() {
 	if err != nil {
 		zap.S().Fatal("failed to create migrator: %v", err)
 	}
-	defer migrator.Close()
+	defer func() {
+		if err := migrator.Close(); err != nil {
+			zap.S().Error("failed to close migrator", zap.Error(err))
+		}
+	}()
 
 	// Execute command
 	switch *command {

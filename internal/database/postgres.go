@@ -27,20 +27,29 @@ func InitializeDatabase(config config.DatabaseConfig) (*sql.DB, error) {
 			DatabaseURL:    config.DatabaseURL,
 		})
 		if err != nil {
-			db.Close()
+			if err := db.Close(); err != nil {
+				zap.S().Error("failed to close database connection", zap.Error(err))
+			}
 			// Return the error to the caller
 			return nil, fmt.Errorf("failed to create migrator: %w", err)
 		}
-		defer migrator.Close()
-
+		defer func() {
+			if err := migrator.Close(); err != nil {
+				zap.S().Error("failed to close migrator", zap.Error(err))
+			}
+		}()
 		version, dirty, err := migrator.Version()
 		if err != nil {
-			db.Close()
+			if err := db.Close(); err != nil {
+				zap.S().Error("failed to close database connection", zap.Error(err))
+			}
 			return nil, fmt.Errorf("failed to get migration version: %w", err)
 		}
 
 		if dirty {
-			db.Close()
+			if err := db.Close(); err != nil {
+				zap.S().Error("failed to close database connection", zap.Error(err))
+			}
 			return nil, fmt.Errorf("database has dirty migration state at version: %d", version)
 		}
 	}

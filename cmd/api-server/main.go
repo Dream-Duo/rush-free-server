@@ -34,14 +34,22 @@ func main() {
 	if err != nil {
 		zap.S().Fatal("failed to initialize database", zap.Error(err))
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			zap.S().Error("failed to close database connection", zap.Error(err))
+		}
+	}()
 
 	// Initialize Redis client
 	redisClient, err := database_initializer.InitializeRedis()
 	if err != nil {
 		zap.S().Fatal("failed to initialize Redis", zap.Error(err))
 	}
-	defer redisClient.Close() // Ensure Redis client is closed on shutdown
+	defer func() {
+		if err := redisClient.Close(); err != nil {
+			zap.S().Error("failed to close Redis client", zap.Error(err))
+		}
+	}() // Ensure Redis client is closed on shutdown
 
 	// Set up signal handling for graceful shutdown
 	stop := make(chan os.Signal, 1)
