@@ -52,22 +52,11 @@ jobs:
 
       - name: Install golangci-lint
         run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
-
-      - name: Debug - List Files
-        run: ls -R
-        working-directory: ${{ github.workspace }}
-
-      - name: Debug - List Go Files
-        run: find . -name "*.go"
-        working-directory: ${{ github.workspace }}
-
-      - name: Debug - Show Current Directory
-        run: pwd
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.56.2
+          export PATH=$PATH:$(go env GOPATH)/bin
 
       - name: Run golangci-lint
         run: $(go env GOPATH)/bin/golangci-lint run --timeout=5m --config=.golangci.yml ./cmd/... ./internal/... ./pkg/...
-        working-directory: ${{ github.workspace }}
 
       - name: Run go vet
         run: go vet ./...
