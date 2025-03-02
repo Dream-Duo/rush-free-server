@@ -1,5 +1,5 @@
 # Use the official Go image as a base
-FROM golang:1.23 AS builder
+FROM golang:1.24 AS builder
 
 # Set environment variables
 ENV GO111MODULE=on \

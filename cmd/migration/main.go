@@ -34,7 +34,7 @@ func main() {
 	}
 
 	// Connect to the database
-	db, err := database.Connect(DatabaseConfig.DatabaseURL)
+	db, err := database.ConnectForMigration(DatabaseConfig.DatabaseURL)
 	if err != nil {
 		zap.S().Fatal("failed to initialize database: %v", zap.Error(err))
 	}

@@ -22,6 +22,7 @@ func main() {
 		log.Fatalf("failed to initialize logger: %v", err)
 	}
 	defer config.SyncLogger() // Ensure the logger is flushed before exiting
+	ctx := context.Background()
 
 	// Get the Data Source Name (DSN) for PostgreSQL connection
 	DatabaseConfig, err := config.GetPostgresDSN(os.Getenv("ENV"))
@@ -30,15 +31,11 @@ func main() {
 	}
 
 	// Initialize database connection with migration verification
-	db, err := database_initializer.InitializeDatabase(DatabaseConfig)
+	pool, err := database_initializer.InitializeDatabase(DatabaseConfig, ctx)
 	if err != nil {
 		zap.S().Fatal("failed to initialize database", zap.Error(err))
 	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			zap.S().Error("failed to close database connection", zap.Error(err))
-		}
-	}()
+	defer pool.Close()
 
 	// Initialize Redis client
 	redisClient, err := database_initializer.InitializeRedis()
@@ -58,7 +55,7 @@ func main() {
 	// Initialize router
 	router := mux.NewRouter()
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		if err := db.Ping(); err != nil {
+		if err := pool.Ping(ctx); err != nil {
 			zap.S().Error("Database ping failed", zap.Error(err))
 			http.Error(w, "Database unavailable", http.StatusServiceUnavailable)
 			return
