@@ -1,0 +1,44 @@
+run:
+  timeout: 5m
+
+issues:
+  exclude-dirs:
+    - "go/pkg/mod"
+    - "vendor"
+    - "opt/hostedtoolcache/go/.*"
+    - "/usr/local/go/.*"
+    - "/usr/lib/go-.*"
+  exclude-use-default: false
+  exclude:
+    - "error return value not checked"
+    - "should have a comment"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - gosimple
+    - revive
+    - goconst
+    - gofmt
+    - gosec
+
+linters-settings:
+  errcheck:
+    check-blank: true
+  gofmt:
+    simplify: true
+  revive:
+    severity: warning
+  staticcheck:
+    checks: ["all"]
+
+output:
+  formats:
+    - colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+

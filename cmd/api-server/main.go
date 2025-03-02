@@ -2,71 +2,118 @@ package main
 
 import (
 	"context"
-    "net/http"
-    "os"
-    "os/signal"
-    "syscall"
-    "time"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-    "github.com/gorilla/mux"
-    "go.uber.org/zap"
+	"rush-free-server/internal/config"
+	database_initializer "rush-free-server/internal/database"
+
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 func main() {
-    // Initialize logger
-    logger, _ := zap.NewDevelopment() // Development logger for better readability
-    defer logger.Sync()
+	// Initialize the logger
+	if err := config.InitializeLogger(); err != nil {
+		log.Fatalf("failed to initialize logger: %v", err)
+	}
+	defer config.SyncLogger() // Ensure the logger is flushed before exiting
+	ctx := context.Background()
+
+	// Get the Data Source Name (DSN) for PostgreSQL connection
+	DatabaseConfig, err := config.GetPostgresDSN(os.Getenv("ENV"))
+	if err != nil {
+		zap.S().Fatal("failed to get the PostgreSQL DSN", zap.Error(err))
+	}
+
+	// Initialize database connection with migration verification
+	pool, err := database_initializer.InitializeDatabase(DatabaseConfig, ctx)
+	if err != nil {
+		zap.S().Fatal("failed to initialize database", zap.Error(err))
+	}
+	defer pool.Close()
+
+	// Initialize Redis client
+	redisClient, err := database_initializer.InitializeRedis()
+	if err != nil {
+		zap.S().Fatal("failed to initialize Redis", zap.Error(err))
+	}
+	defer func() {
+		if err := redisClient.Close(); err != nil {
+			zap.S().Error("failed to close Redis client", zap.Error(err))
+		}
+	}() // Ensure Redis client is closed on shutdown
+
+	// Set up signal handling for graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
 	// Initialize router
-    router := mux.NewRouter()
-
-    // Basic health check route
-	// curl http://localhost:8080/health
-    router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-        w.WriteHeader(http.StatusOK)
-        w.Write([]byte("OK"))
-    })
+	router := mux.NewRouter()
+	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		if err := pool.Ping(ctx); err != nil {
+			zap.S().Error("Database ping failed", zap.Error(err))
+			http.Error(w, "Database unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		if _, err := redisClient.Ping(context.Background()).Result(); err != nil {
+			zap.S().Error("Redis ping failed", zap.Error(err))
+			http.Error(w, "Redis unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte("OK")); err != nil {
+			zap.S().Error("Failed to write response", zap.Error(err))
+		}
+	})
 
 	// API routes
-    api := router.PathPrefix("/api/v1").Subrouter()
-    
-    // Sample API endpoint
-	// curl http://localhost:8080/api/v1/ping
-    api.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        w.Write([]byte(`{"message": "pong"}`))
-    })
+	api := router.PathPrefix("/api/v1").Subrouter()
+	api.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte(`{"message": "pong"}`)); err != nil {
+			zap.S().Error("Failed to write response", zap.Error(err))
+		}
+	})
+
+	serverPort := os.Getenv("SERVER_PORT")
+	if serverPort == "" {
+		serverPort = "8080"
+	}
 
 	// Create server
-    server := &http.Server{
-        Addr:         ":8080",  // Hard-coded port for simplicity
-        Handler:      router,
-        ReadTimeout:  15 * time.Second,
-        WriteTimeout: 15 * time.Second,
-    }
+	server := &http.Server{
+		Addr:         ":" + serverPort,
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+	}
 
 	// Graceful shutdown
-    go func() {
-        sigint := make(chan os.Signal, 1)
-        signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM)
-        <-sigint
+	go func() {
+		<-stop
 
-        // Received shutdown signal
-        logger.Info("Shutting down server...")
-        ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-        defer cancel()
+		// Received shutdown signal
+		zap.L().Info("Shutting down server...")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
-        if err := server.Shutdown(ctx); err != nil {
-            logger.Fatal("Server shutdown failed", zap.Error(err))
-        }
-    }()
+		if err := server.Shutdown(ctx); err != nil {
+			// Using Error instead of Fatal for graceful shutdown
+			zap.S().Error("server shutdown failed", zap.Error(err))
+		}
+	}()
 
-    // Start server
-    logger.Info("Starting server on :8080")
-    if err := server.ListenAndServe(); err != http.ErrServerClosed {
-        logger.Fatal("Server failed to start", zap.Error(err))
-    }
+	// Start server
+	zap.L().Info("Starting server on :8080")
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		zap.S().Fatal("server failed to start", zap.Error(err))
+	}
 
-    logger.Info("Server stopped")
+	zap.L().Info("Server stopped")
 }

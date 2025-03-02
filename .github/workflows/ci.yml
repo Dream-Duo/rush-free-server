@@ -1,0 +1,92 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: postgres_db
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+ 
+      - name: Remove cached Go versions (if corrupted)
+        run: sudo rm -rf /opt/hostedtoolcache/go/
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.24.0 
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Run gofmt check (fail if files need formatting)
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Go files need formatting. Run 'gofmt -w .' locally and commit changes."
+            exit 1
+          fi
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.5
+
+      - name: Verify golangci-lint Installation
+        run: |
+          ls -la $(go env GOPATH)/bin
+
+      - name: Set PATH for golangci-lint
+        run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Debug Go Environment
+        run: |
+          go version
+          go env
+
+      - name: Run golangci-lint
+        run: |
+          which golangci-lint
+          golangci-lint --version
+          golangci-lint run --timeout=5m --verbose --config=.golangci.yml --out-format=json ./cmd/... ./internal/... ./pkg/...
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Run gosec security check
+        run: $(go env GOPATH)/bin/gosec ./...
+
+      - name: Run tests
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+        run: go test ./... -v
