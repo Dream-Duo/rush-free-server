@@ -46,7 +46,7 @@ func main() {
 
 	// Create migrator
 	migrator, err := database_migration.NewMigrator(db, database_migration.MigrationConfig{
-		MigrationsPath: "/app/migrations/postgres",
+		MigrationsPath: "/app/migrations/database",
 		DatabaseURL:    DatabaseConfig.DatabaseURL,
 	})
 	if err != nil {
