@@ -14,7 +14,7 @@ END $$;
 -- Restaurants table
 CREATE TABLE restaurants (
     restaurant_id SERIAL PRIMARY KEY,
-    vendor_id INTEGER NOT NULL REFERENCES vendors(vendor_id),
+    vendor_id INTEGER REFERENCES vendors(vendor_id),
     name VARCHAR(255) NOT NULL,
     description TEXT,
     cuisine_type VARCHAR(100),
