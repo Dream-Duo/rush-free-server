@@ -1,10 +1,28 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "internal/database/queries/"
-    schema: "migrations/database/"
+    queries: "internal/database/restaurants/queries/"
+    schema: "migrations/database/003_create_restaurants.up.sql"
     gen:
       go:
-        package: "database"
-        out: "internal/database/sqlc"
+        package: "restaurants"
+        out: "internal/database/restaurants/sqlc"
+        sql_package: "pgx/v5"
+
+  - engine: "postgresql"
+    queries: "internal/database/users/queries/"
+    schema: "migrations/database/001_create_users.up.sql"
+    gen:
+      go:
+        package: "users"
+        out: "internal/database/users/sqlc"
+        sql_package: "pgx/v5"
+
+  - engine: "postgresql"
+    queries: "internal/database/joins/queries/"
+    schema: "migrations/database"
+    gen: 
+      go:
+        package: "joins"
+        out: "internal/database/joins/sqlc"
         sql_package: "pgx/v5"
