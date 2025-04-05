@@ -1,3 +1,3 @@
-package redis
+package cache
 
 // User session handling

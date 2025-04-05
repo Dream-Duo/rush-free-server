@@ -25,7 +25,7 @@ func InitializeDatabase(config config.DatabaseConfig, ctx context.Context) (*pgx
 			return nil, fmt.Errorf("failed to initialize database: %w", err)
 		}
 		migrator, err := NewMigrator(db, MigrationConfig{
-			MigrationsPath: "/app/migrations/postgres",
+			MigrationsPath: "/app/migrations/database",
 			DatabaseURL:    config.DatabaseURL,
 		})
 		if err != nil {
